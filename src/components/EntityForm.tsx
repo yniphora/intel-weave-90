@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DialogFooter } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { Upload, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface EntityFormProps {
   entity?: Entity | null;
@@ -20,16 +23,74 @@ const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
     avatar_url: "",
     notes: "",
   });
+  const [uploading, setUploading] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   useEffect(() => {
     if (entity) {
       setFormData(entity);
+      setPreviewUrl(entity.avatar_url || "");
     }
   }, [entity]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadAvatar = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error("Error al subir la imagen");
+      return null;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    setUploading(true);
+
+    let avatarUrl = formData.avatar_url;
+
+    if (avatarFile) {
+      const uploadedUrl = await uploadAvatar(avatarFile);
+      if (uploadedUrl) {
+        avatarUrl = uploadedUrl;
+      }
+    }
+
+    onSubmit({ ...formData, avatar_url: avatarUrl });
+    setUploading(false);
+  };
+
+  const removePreview = () => {
+    setAvatarFile(null);
+    setPreviewUrl("");
+    setFormData({ ...formData, avatar_url: "" });
   };
 
   return (
@@ -65,15 +126,39 @@ const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="avatar_url">URL del Avatar</Label>
-        <Input
-          id="avatar_url"
-          type="url"
-          value={formData.avatar_url || ""}
-          onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-          placeholder="https://..."
-          className="border-primary/20 focus:border-primary"
-        />
+        <Label htmlFor="avatar">Avatar</Label>
+        <div className="flex flex-col gap-4">
+          {previewUrl && (
+            <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-primary/30">
+              <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={removePreview}
+                className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          <div className="flex gap-2 items-center">
+            <Input
+              id="avatar"
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="border-primary/20 focus:border-primary"
+            />
+            <Upload className="w-5 h-5 text-primary" />
+          </div>
+          <Input
+            id="avatar_url"
+            type="url"
+            value={formData.avatar_url || ""}
+            onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+            placeholder="O pega una URL: https://..."
+            className="border-primary/20 focus:border-primary"
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -91,8 +176,8 @@ const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" className="gradient-primary">
-          {entity ? "Actualizar" : "Crear"}
+        <Button type="submit" className="gradient-primary" disabled={uploading}>
+          {uploading ? "Subiendo..." : entity ? "Actualizar" : "Crear"}
         </Button>
       </DialogFooter>
     </form>

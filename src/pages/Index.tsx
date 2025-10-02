@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, LogOut, Shield, Database } from "lucide-react";
+import { Plus, Search, LogOut, Shield, Database, GitBranch } from "lucide-react";
 import EntityCard from "@/components/EntityCard";
 import EntityForm from "@/components/EntityForm";
 import EntityDetails from "@/components/EntityDetails";
@@ -151,14 +151,24 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">Sistema de Gestión de Entidades</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="border-primary/20 hover:bg-destructive/10 hover:border-destructive/50"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Cerrar Sesión
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate("/graph")}
+                className="border-primary/20 hover:bg-primary/10"
+              >
+                <GitBranch className="h-4 w-4 mr-2" />
+                Grafo
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="border-primary/20 hover:bg-destructive/10 hover:border-destructive/50"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Cerrar Sesión
+              </Button>
+            </div>
           </div>
         </div>
       </header>
