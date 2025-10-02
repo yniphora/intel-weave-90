@@ -23,6 +23,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
 
 // Custom node component
 const EntityNode = ({ data }: any) => {
@@ -66,6 +68,7 @@ const RelationshipGraph = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [showDialog, setShowDialog] = useState(false);
+  const [showManualDialog, setShowManualDialog] = useState(false);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
   const [newRelationship, setNewRelationship] = useState({
     entity_a_id: "",
@@ -218,33 +221,59 @@ const RelationshipGraph = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/")}
-              className="text-primary hover:text-primary/80"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Grafo de Relaciones</h1>
-              <p className="text-muted-foreground">
-                Conecta entidades arrastrando entre nodos
-              </p>
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/")}
+                className="text-primary hover:text-primary/80"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Grafo de Relaciones</h1>
+                <p className="text-muted-foreground">
+                  Visualiza y conecta todas tus entidades
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {selectedEdge && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteRelationship(selectedEdge)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar Relación
+                </Button>
+              )}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setShowManualDialog(true)}
+                className="gradient-primary"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Añadir Relación
+              </Button>
             </div>
           </div>
-          {selectedEdge && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDeleteRelationship(selectedEdge)}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Eliminar Relación
-            </Button>
-          )}
+
+          {/* Instructions Card */}
+          <Card className="border-primary/20 bg-card/50 p-4">
+            <h3 className="font-semibold text-sm text-foreground mb-2">
+              💡 Cómo conectar entidades:
+            </h3>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• <strong>Arrastra</strong> desde cualquier nodo a otro para crear una conexión</li>
+              <li>• Conecta <strong>Personas, Grupos y Organizaciones</strong> sin restricciones</li>
+              <li>• Haz clic en "Añadir Relación" para conectar manualmente</li>
+              <li>• Haz clic en una línea para seleccionarla y eliminarla</li>
+            </ul>
+          </Card>
         </div>
 
         <div className="h-[calc(100vh-200px)] bg-card rounded-lg border-2 border-primary/20 shadow-glow">
@@ -265,10 +294,21 @@ const RelationshipGraph = () => {
         </div>
       </div>
 
+      {/* Quick dialog when dragging connection */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="bg-card border-primary/30">
           <DialogHeader>
             <DialogTitle className="text-foreground">Nueva Relación</DialogTitle>
+            <DialogDescription>
+              Conectando{" "}
+              <strong>
+                {entities.find((e) => e.id === newRelationship.entity_a_id)?.name}
+              </strong>
+              {" → "}
+              <strong>
+                {entities.find((e) => e.id === newRelationship.entity_b_id)?.name}
+              </strong>
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -306,6 +346,132 @@ const RelationshipGraph = () => {
               <Button
                 className="gradient-primary"
                 onClick={handleCreateRelationship}
+              >
+                Crear Relación
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual relationship creation dialog */}
+      <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>
+        <DialogContent className="bg-card border-primary/30">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Añadir Relación Manualmente</DialogTitle>
+            <DialogDescription>
+              Conecta cualquier persona, grupo u organización
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Entidad de Origen *</Label>
+              <Select
+                value={newRelationship.entity_a_id}
+                onValueChange={(value) =>
+                  setNewRelationship({ ...newRelationship, entity_a_id: value })
+                }
+              >
+                <SelectTrigger className="border-primary/20">
+                  <SelectValue placeholder="Selecciona una entidad" />
+                </SelectTrigger>
+                <SelectContent>
+                  {entities.map((entity) => (
+                    <SelectItem key={entity.id} value={entity.id}>
+                      <div className="flex items-center gap-2">
+                        <span className="capitalize text-xs text-muted-foreground">
+                          [{entity.type}]
+                        </span>
+                        {entity.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Entidad de Destino *</Label>
+              <Select
+                value={newRelationship.entity_b_id}
+                onValueChange={(value) =>
+                  setNewRelationship({ ...newRelationship, entity_b_id: value })
+                }
+              >
+                <SelectTrigger className="border-primary/20">
+                  <SelectValue placeholder="Selecciona una entidad" />
+                </SelectTrigger>
+                <SelectContent>
+                  {entities.map((entity) => (
+                    <SelectItem key={entity.id} value={entity.id}>
+                      <div className="flex items-center gap-2">
+                        <span className="capitalize text-xs text-muted-foreground">
+                          [{entity.type}]
+                        </span>
+                        {entity.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tipo de Relación *</Label>
+              <Input
+                value={newRelationship.relationship_type}
+                onChange={(e) =>
+                  setNewRelationship({
+                    ...newRelationship,
+                    relationship_type: e.target.value,
+                  })
+                }
+                placeholder="ej: Socio, Amigo, Miembro, Subsidiaria..."
+                className="border-primary/20"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Notas</Label>
+              <Input
+                value={newRelationship.notes}
+                onChange={(e) =>
+                  setNewRelationship({
+                    ...newRelationship,
+                    notes: e.target.value,
+                  })
+                }
+                placeholder="Información adicional..."
+                className="border-primary/20"
+              />
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowManualDialog(false);
+                  setNewRelationship({
+                    entity_a_id: "",
+                    entity_b_id: "",
+                    relationship_type: "",
+                    notes: "",
+                  });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="gradient-primary"
+                onClick={() => {
+                  handleCreateRelationship();
+                  setShowManualDialog(false);
+                }}
+                disabled={
+                  !newRelationship.entity_a_id ||
+                  !newRelationship.entity_b_id ||
+                  !newRelationship.relationship_type
+                }
               >
                 Crear Relación
               </Button>
