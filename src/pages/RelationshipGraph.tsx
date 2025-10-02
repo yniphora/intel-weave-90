@@ -129,31 +129,54 @@ const RelationshipGraph = () => {
       },
     }));
 
-    // Create edges from relationships
-    const newEdges: Edge[] = relationshipsData.map((rel) => ({
-      id: rel.id,
-      source: rel.entity_a_id,
-      target: rel.entity_b_id,
-      label: rel.relationship_type,
-      type: "smoothstep",
-      animated: true,
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        color: "#7C3AED",
-      },
-      style: {
-        stroke: "#7C3AED",
-        strokeWidth: 2,
-      },
-      labelStyle: {
-        fill: "#fff",
-        fontWeight: 700,
-      },
-      labelBgStyle: {
-        fill: "#1a1625",
-        fillOpacity: 0.9,
-      },
-    }));
+    // Count connections between same pairs for offset
+    const connectionCount: { [key: string]: number } = {};
+    const currentIndex: { [key: string]: number } = {};
+
+    // Create edges from relationships with proper offsets for multiple connections
+    const newEdges: Edge[] = relationshipsData.map((rel) => {
+      const pairKey = [rel.entity_a_id, rel.entity_b_id].sort().join('-');
+      connectionCount[pairKey] = (connectionCount[pairKey] || 0) + 1;
+      currentIndex[pairKey] = (currentIndex[pairKey] || 0) + 1;
+      
+      const index = currentIndex[pairKey];
+      const total = relationshipsData.filter(r => 
+        ([r.entity_a_id, r.entity_b_id].sort().join('-') === pairKey)
+      ).length;
+      
+      // Calculate offset for multiple edges between same nodes
+      const offset = total > 1 ? (index - (total + 1) / 2) * 40 : 0;
+
+      return {
+        id: rel.id,
+        source: rel.entity_a_id,
+        target: rel.entity_b_id,
+        label: rel.relationship_type,
+        type: "smoothstep",
+        animated: true,
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: "#A855F7",
+          width: 25,
+          height: 25,
+        },
+        style: {
+          stroke: "#A855F7",
+          strokeWidth: 3,
+        },
+        labelStyle: {
+          fill: "#fff",
+          fontWeight: 700,
+          fontSize: 12,
+        },
+        labelBgStyle: {
+          fill: "#1a1625",
+          fillOpacity: 0.95,
+        },
+        labelBgPadding: [8, 4] as [number, number],
+        data: { offset },
+      };
+    });
 
     setNodes(newNodes);
     setEdges(newEdges);
@@ -268,10 +291,11 @@ const RelationshipGraph = () => {
               💡 Cómo conectar entidades:
             </h3>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• <strong>Arrastra</strong> desde cualquier nodo a otro para crear una conexión</li>
+              <li>• <strong>Arrastra</strong> desde cualquier nodo a otro para crear una conexión morada</li>
               <li>• Conecta <strong>Personas, Grupos y Organizaciones</strong> sin restricciones</li>
+              <li>• Puedes crear <strong>múltiples relaciones</strong> entre las mismas entidades</li>
               <li>• Haz clic en "Añadir Relación" para conectar manualmente</li>
-              <li>• Haz clic en una línea para seleccionarla y eliminarla</li>
+              <li>• Haz clic en una línea morada para seleccionarla y eliminarla</li>
             </ul>
           </Card>
         </div>
@@ -287,8 +311,20 @@ const RelationshipGraph = () => {
             nodeTypes={nodeTypes}
             fitView
             className="bg-background/5"
+            defaultEdgeOptions={{
+              type: "smoothstep",
+              animated: true,
+              style: { 
+                stroke: "#A855F7", 
+                strokeWidth: 3 
+              },
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                color: "#A855F7",
+              },
+            }}
           >
-            <Background color="#7C3AED" gap={20} />
+            <Background color="#A855F7" gap={20} size={1} />
             <Controls className="bg-card border border-primary/20" />
           </ReactFlow>
         </div>
