@@ -36,10 +36,10 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 
-// Custom node component
+// Custom node component with connection handles
 const EntityNode = ({ data }: any) => {
   return (
-    <div className="bg-card border-2 border-primary/30 rounded-lg p-4 shadow-glow min-w-[200px]">
+    <div className="bg-card border-2 border-primary/30 rounded-lg p-4 shadow-glow min-w-[200px] hover:border-primary transition-all">
       <div className="flex items-center gap-3">
         {data.avatar_url && (
           <img
@@ -157,23 +157,26 @@ const RelationshipGraph = () => {
         markerEnd: {
           type: MarkerType.ArrowClosed,
           color: "#A855F7",
-          width: 25,
-          height: 25,
+          width: 30,
+          height: 30,
         },
         style: {
           stroke: "#A855F7",
-          strokeWidth: 3,
+          strokeWidth: 4,
+          filter: "drop-shadow(0 0 8px rgba(168, 85, 247, 0.6))",
         },
         labelStyle: {
           fill: "#fff",
           fontWeight: 700,
-          fontSize: 12,
+          fontSize: 14,
         },
         labelBgStyle: {
           fill: "#1a1625",
           fillOpacity: 0.95,
+          padding: 8,
         },
-        labelBgPadding: [8, 4] as [number, number],
+        labelBgPadding: [10, 6] as [number, number],
+        labelBgBorderRadius: 4,
         data: { offset },
       };
     });
@@ -316,11 +319,14 @@ const RelationshipGraph = () => {
               animated: true,
               style: { 
                 stroke: "#A855F7", 
-                strokeWidth: 3 
+                strokeWidth: 4,
+                filter: "drop-shadow(0 0 8px rgba(168, 85, 247, 0.6))",
               },
               markerEnd: {
                 type: MarkerType.ArrowClosed,
                 color: "#A855F7",
+                width: 30,
+                height: 30,
               },
             }}
           >
