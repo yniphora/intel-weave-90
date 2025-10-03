@@ -11,6 +11,8 @@ import ReactFlow, {
   Connection,
   MarkerType,
   NodeTypes,
+  Handle,
+  Position,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +41,19 @@ import { Card } from "@/components/ui/card";
 // Custom node component with connection handles
 const EntityNode = ({ data }: any) => {
   return (
-    <div className="bg-card border-2 border-primary/30 rounded-lg p-4 shadow-glow min-w-[200px] hover:border-primary transition-all">
+    <div className="bg-card border-2 border-primary/30 rounded-lg p-4 shadow-glow min-w-[200px] hover:border-primary transition-all relative">
+      {/* Connection handles - required for ReactFlow to create edges */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background"
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background"
+      />
+      
       <div className="flex items-center gap-3">
         {data.avatar_url && (
           <img
