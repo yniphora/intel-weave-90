@@ -47,6 +47,44 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_images: {
+        Row: {
+          created_at: string
+          entity_id: string
+          id: string
+          image_url: string
+          notes: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          id?: string
+          image_url: string
+          notes?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          id?: string
+          image_url?: string
+          notes?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_images_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_tags: {
         Row: {
           entity_id: string

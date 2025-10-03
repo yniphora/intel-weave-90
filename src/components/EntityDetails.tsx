@@ -7,9 +7,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SocialAccountForm from "./SocialAccountForm";
+import EntityImageForm from "./EntityImageForm";
+
+interface EntityImage {
+  id: string;
+  entity_id: string;
+  image_url: string;
+  title: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 interface EntityDetailsProps {
   entity: Entity;
@@ -20,10 +31,14 @@ const EntityDetails = ({ entity, onUpdate }: EntityDetailsProps) => {
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const [showSocialForm, setShowSocialForm] = useState(false);
   const [editingSocial, setEditingSocial] = useState<SocialAccount | null>(null);
+  const [entityImages, setEntityImages] = useState<EntityImage[]>([]);
+  const [showImageForm, setShowImageForm] = useState(false);
+  const [editingImage, setEditingImage] = useState<EntityImage | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     loadSocialAccounts();
+    loadEntityImages();
   }, [entity.id]);
 
   const loadSocialAccounts = async () => {
@@ -94,6 +109,73 @@ const EntityDetails = ({ entity, onUpdate }: EntityDetailsProps) => {
     } else {
       toast({ title: "Cuenta eliminada" });
       loadSocialAccounts();
+    }
+  };
+
+  const loadEntityImages = async () => {
+    const { data, error } = await supabase
+      .from("entity_images")
+      .select("*")
+      .eq("entity_id", entity.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setEntityImages(data || []);
+    }
+  };
+
+  const handleSaveImage = async (data: Partial<EntityImage>) => {
+    if (!data.image_url) return;
+
+    if (editingImage) {
+      const { error } = await supabase
+        .from("entity_images")
+        .update(data)
+        .eq("id", editingImage.id);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Imagen actualizada exitosamente" });
+        loadEntityImages();
+        setShowImageForm(false);
+        setEditingImage(null);
+      }
+    } else {
+      const { error } = await supabase
+        .from("entity_images")
+        .insert([{
+          entity_id: entity.id,
+          image_url: data.image_url,
+          title: data.title || null,
+          notes: data.notes || null,
+        }]);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Imagen agregada exitosamente" });
+        loadEntityImages();
+        setShowImageForm(false);
+      }
+    }
+  };
+
+  const handleDeleteImage = async (id: string) => {
+    if (!confirm("¿Eliminar esta imagen?")) return;
+
+    const { error } = await supabase
+      .from("entity_images")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Imagen eliminada" });
+      loadEntityImages();
     }
   };
 
@@ -209,6 +291,73 @@ const EntityDetails = ({ entity, onUpdate }: EntityDetailsProps) => {
         </CardContent>
       </Card>
 
+      <Card className="border-primary/20">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Imágenes</CardTitle>
+          <Button
+            onClick={() => setShowImageForm(true)}
+            size="sm"
+            className="gradient-primary"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Agregar
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {entityImages.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No hay imágenes registradas
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {entityImages.map((image) => (
+                <Card key={image.id} className="border-primary/10 overflow-hidden">
+                  <div className="relative aspect-video bg-muted">
+                    <img
+                      src={image.image_url}
+                      alt={image.title || "Entity image"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <CardContent className="p-4 space-y-2">
+                    {image.title && (
+                      <h4 className="font-semibold text-sm">{image.title}</h4>
+                    )}
+                    {image.notes && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {image.notes}
+                      </p>
+                    )}
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingImage(image);
+                          setShowImageForm(true);
+                        }}
+                        className="flex-1"
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteImage(image.id)}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Dialog open={showSocialForm} onOpenChange={setShowSocialForm}>
         <DialogContent className="max-w-2xl border-primary/20">
           <DialogHeader>
@@ -223,6 +372,25 @@ const EntityDetails = ({ entity, onUpdate }: EntityDetailsProps) => {
             onCancel={() => {
               setShowSocialForm(false);
               setEditingSocial(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showImageForm} onOpenChange={setShowImageForm}>
+        <DialogContent className="max-w-2xl border-primary/20">
+          <DialogHeader>
+            <DialogTitle>
+              {editingImage ? "Editar Imagen" : "Agregar Imagen"}
+            </DialogTitle>
+          </DialogHeader>
+          <EntityImageForm
+            image={editingImage}
+            entityId={entity.id}
+            onSubmit={handleSaveImage}
+            onCancel={() => {
+              setShowImageForm(false);
+              setEditingImage(null);
             }}
           />
         </DialogContent>
