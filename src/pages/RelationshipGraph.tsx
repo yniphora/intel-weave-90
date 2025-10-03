@@ -128,13 +128,14 @@ const RelationshipGraph = () => {
   };
 
   const buildGraph = (entitiesData: Entity[], relationshipsData: Relationship[]) => {
-    // Create nodes from entities
+    // Create nodes from entities with better spacing for more entities
+    const radius = Math.max(300, entitiesData.length * 50);
     const newNodes: Node[] = entitiesData.map((entity, index) => ({
       id: entity.id,
       type: "entity",
       position: {
-        x: Math.cos((index / entitiesData.length) * 2 * Math.PI) * 300 + 400,
-        y: Math.sin((index / entitiesData.length) * 2 * Math.PI) * 300 + 300,
+        x: Math.cos((index / entitiesData.length) * 2 * Math.PI) * radius + 500,
+        y: Math.sin((index / entitiesData.length) * 2 * Math.PI) * radius + 400,
       },
       data: {
         label: entity.name,
@@ -143,30 +144,38 @@ const RelationshipGraph = () => {
       },
     }));
 
-    // Count connections between same pairs for offset
-    const connectionCount: { [key: string]: number } = {};
-    const currentIndex: { [key: string]: number } = {};
+    // Optimized edge creation - count pairs first in single pass
+    const pairCounts = new Map<string, number>();
+    const pairIndices = new Map<string, number>();
+    
+    relationshipsData.forEach((rel) => {
+      const pairKey = [rel.entity_a_id, rel.entity_b_id].sort().join('-');
+      pairCounts.set(pairKey, (pairCounts.get(pairKey) || 0) + 1);
+    });
 
-    // Create edges from relationships with proper offsets for multiple connections
+    // Create edges with curvature for multiple connections
     const newEdges: Edge[] = relationshipsData.map((rel) => {
       const pairKey = [rel.entity_a_id, rel.entity_b_id].sort().join('-');
-      connectionCount[pairKey] = (connectionCount[pairKey] || 0) + 1;
-      currentIndex[pairKey] = (currentIndex[pairKey] || 0) + 1;
+      const currentIdx = (pairIndices.get(pairKey) || 0);
+      pairIndices.set(pairKey, currentIdx + 1);
       
-      const index = currentIndex[pairKey];
-      const total = relationshipsData.filter(r => 
-        ([r.entity_a_id, r.entity_b_id].sort().join('-') === pairKey)
-      ).length;
+      const total = pairCounts.get(pairKey) || 1;
       
-      // Calculate offset for multiple edges between same nodes
-      const offset = total > 1 ? (index - (total + 1) / 2) * 40 : 0;
+      // Calculate curvature for multiple edges between same nodes
+      let pathOptions = {};
+      if (total > 1) {
+        const offsetFactor = (currentIdx - (total - 1) / 2) * 0.5;
+        pathOptions = {
+          curvature: offsetFactor,
+        };
+      }
 
       return {
         id: rel.id,
         source: rel.entity_a_id,
         target: rel.entity_b_id,
         label: rel.relationship_type,
-        type: "smoothstep",
+        type: "default",
         animated: true,
         markerEnd: {
           type: MarkerType.ArrowClosed,
@@ -187,11 +196,10 @@ const RelationshipGraph = () => {
         labelBgStyle: {
           fill: "#1a1625",
           fillOpacity: 0.95,
-          padding: 8,
         },
         labelBgPadding: [10, 6] as [number, number],
         labelBgBorderRadius: 4,
-        data: { offset },
+        ...pathOptions,
       };
     });
 
@@ -201,6 +209,12 @@ const RelationshipGraph = () => {
 
   const onConnect = useCallback(
     (params: Connection) => {
+      // Prevent connecting to itself
+      if (params.source === params.target) {
+        toast.error("No puedes conectar una entidad consigo misma");
+        return;
+      }
+      
       setNewRelationship({
         entity_a_id: params.source || "",
         entity_b_id: params.target || "",
@@ -215,6 +229,16 @@ const RelationshipGraph = () => {
   const handleCreateRelationship = async () => {
     if (!newRelationship.relationship_type) {
       toast.error("Por favor especifica el tipo de relación");
+      return;
+    }
+
+    if (!newRelationship.entity_a_id || !newRelationship.entity_b_id) {
+      toast.error("Selecciona ambas entidades");
+      return;
+    }
+
+    if (newRelationship.entity_a_id === newRelationship.entity_b_id) {
+      toast.error("No puedes conectar una entidad consigo misma");
       return;
     }
 
@@ -236,6 +260,12 @@ const RelationshipGraph = () => {
 
     toast.success("Relación creada exitosamente");
     setShowDialog(false);
+    setNewRelationship({
+      entity_a_id: "",
+      entity_b_id: "",
+      relationship_type: "",
+      notes: "",
+    });
     fetchData();
   };
 
@@ -329,7 +359,7 @@ const RelationshipGraph = () => {
             fitView
             className="bg-background/5"
             defaultEdgeOptions={{
-              type: "smoothstep",
+              type: "default",
               animated: true,
               style: { 
                 stroke: "#A855F7", 
@@ -342,6 +372,10 @@ const RelationshipGraph = () => {
                 width: 30,
                 height: 30,
               },
+            }}
+            connectionLineStyle={{
+              stroke: "#A855F7",
+              strokeWidth: 4,
             }}
           >
             <Background color="#A855F7" gap={20} size={1} />
