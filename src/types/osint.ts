@@ -1,4 +1,4 @@
-export type EntityType = "person" | "group" | "organization" | "other";
+export type EntityType = "person" | "group" | "organization" | "website" | "other";
 export type SocialPlatform = 
   | "telegram" 
   | "discord" 
@@ -24,6 +24,10 @@ export interface Entity {
   type: EntityType;
   avatar_url: string | null;
   notes: string | null;
+  ips: string | null;
+  domains: string | null;
+  hosting_info: string | null;
+  web_archive_url: string | null;
   created_at: string;
   updated_at: string;
 }

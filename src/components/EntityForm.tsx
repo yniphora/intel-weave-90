@@ -22,6 +22,10 @@ const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
     type: "person",
     avatar_url: "",
     notes: "",
+    ips: "",
+    domains: "",
+    hosting_info: "",
+    web_archive_url: "",
   });
   const [uploading, setUploading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -120,6 +124,7 @@ const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
             <SelectItem value="person">Persona</SelectItem>
             <SelectItem value="group">Grupo</SelectItem>
             <SelectItem value="organization">Organización</SelectItem>
+            <SelectItem value="website">Página Web</SelectItem>
             <SelectItem value="other">Otro</SelectItem>
           </SelectContent>
         </Select>
@@ -161,13 +166,62 @@ const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
         </div>
       </div>
 
+      {formData.type === "website" && (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="domains">Dominios</Label>
+            <Input
+              id="domains"
+              value={formData.domains || ""}
+              onChange={(e) => setFormData({ ...formData, domains: e.target.value })}
+              placeholder="example.com, subdomain.example.com"
+              className="border-primary/20 focus:border-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="ips">Direcciones IP</Label>
+            <Input
+              id="ips"
+              value={formData.ips || ""}
+              onChange={(e) => setFormData({ ...formData, ips: e.target.value })}
+              placeholder="192.168.1.1, 10.0.0.1"
+              className="border-primary/20 focus:border-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="hosting_info">Información de Hosting</Label>
+            <Textarea
+              id="hosting_info"
+              value={formData.hosting_info || ""}
+              onChange={(e) => setFormData({ ...formData, hosting_info: e.target.value })}
+              placeholder="Proveedor, ubicación del servidor, tecnologías..."
+              className="border-primary/20 focus:border-primary min-h-[80px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="web_archive_url">Enlace Web Archive / Wayback Machine</Label>
+            <Input
+              id="web_archive_url"
+              type="url"
+              value={formData.web_archive_url || ""}
+              onChange={(e) => setFormData({ ...formData, web_archive_url: e.target.value })}
+              placeholder="https://web.archive.org/web/..."
+              className="border-primary/20 focus:border-primary"
+            />
+          </div>
+        </>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="notes">Notas</Label>
         <Textarea
           id="notes"
           value={formData.notes || ""}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          placeholder="Información adicional..."
+          placeholder="Información adicional, capturas de pantalla, observaciones..."
           className="border-primary/20 focus:border-primary min-h-[100px]"
         />
       </div>

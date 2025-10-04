@@ -18,32 +18,44 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          domains: string | null
+          hosting_info: string | null
           id: string
+          ips: string | null
           name: string
           notes: string | null
           type: Database["public"]["Enums"]["entity_type"]
           updated_at: string
           user_id: string
+          web_archive_url: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          domains?: string | null
+          hosting_info?: string | null
           id?: string
+          ips?: string | null
           name: string
           notes?: string | null
           type?: Database["public"]["Enums"]["entity_type"]
           updated_at?: string
           user_id: string
+          web_archive_url?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          domains?: string | null
+          hosting_info?: string | null
           id?: string
+          ips?: string | null
           name?: string
           notes?: string | null
           type?: Database["public"]["Enums"]["entity_type"]
           updated_at?: string
           user_id?: string
+          web_archive_url?: string | null
         }
         Relationships: []
       }
@@ -245,7 +257,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      entity_type: "person" | "group" | "organization" | "other"
+      entity_type: "person" | "group" | "organization" | "other" | "website"
       social_platform:
         | "telegram"
         | "discord"
@@ -390,7 +402,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      entity_type: ["person", "group", "organization", "other"],
+      entity_type: ["person", "group", "organization", "other", "website"],
       social_platform: [
         "telegram",
         "discord",
