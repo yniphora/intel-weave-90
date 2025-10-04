@@ -91,6 +91,47 @@ const RelationshipGraph = () => {
     notes: "",
   });
 
+  // Save node positions to localStorage
+  const saveNodePositions = useCallback((nodes: Node[]) => {
+    const positions = nodes.reduce((acc, node) => {
+      acc[node.id] = { x: node.position.x, y: node.position.y };
+      return acc;
+    }, {} as Record<string, { x: number; y: number }>);
+    localStorage.setItem('graph-node-positions', JSON.stringify(positions));
+  }, []);
+
+  // Load saved node positions from localStorage
+  const loadNodePositions = useCallback(() => {
+    const saved = localStorage.getItem('graph-node-positions');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  }, []);
+
+  // Custom onNodesChange that saves positions when nodes are moved
+  const handleNodesChange = useCallback(
+    (changes: any) => {
+      onNodesChange(changes);
+      // Save positions after nodes are moved
+      const moveChange = changes.find((c: any) => c.type === 'position' && c.dragging === false);
+      if (moveChange) {
+        // Use setTimeout to ensure state is updated
+        setTimeout(() => {
+          setNodes((currentNodes) => {
+            saveNodePositions(currentNodes);
+            return currentNodes;
+          });
+        }, 0);
+      }
+    },
+    [onNodesChange, setNodes, saveNodePositions]
+  );
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -128,21 +169,29 @@ const RelationshipGraph = () => {
   };
 
   const buildGraph = (entitiesData: Entity[], relationshipsData: Relationship[]) => {
+    // Load saved positions
+    const savedPositions = loadNodePositions();
+    
     // Create nodes from entities with better spacing for more entities
     const radius = Math.max(300, entitiesData.length * 50);
-    const newNodes: Node[] = entitiesData.map((entity, index) => ({
-      id: entity.id,
-      type: "entity",
-      position: {
+    const newNodes: Node[] = entitiesData.map((entity, index) => {
+      // Use saved position if available, otherwise calculate new position
+      const position = savedPositions[entity.id] || {
         x: Math.cos((index / entitiesData.length) * 2 * Math.PI) * radius + 500,
         y: Math.sin((index / entitiesData.length) * 2 * Math.PI) * radius + 400,
-      },
-      data: {
-        label: entity.name,
-        type: entity.type,
-        avatar_url: entity.avatar_url,
-      },
-    }));
+      };
+
+      return {
+        id: entity.id,
+        type: "entity",
+        position,
+        data: {
+          label: entity.name,
+          type: entity.type,
+          avatar_url: entity.avatar_url,
+        },
+      };
+    });
 
     // Optimized edge creation - count pairs first in single pass
     const pairCounts = new Map<string, number>();
@@ -351,7 +400,7 @@ const RelationshipGraph = () => {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
+            onNodesChange={handleNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onEdgeClick={onEdgeClick}
