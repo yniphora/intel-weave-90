@@ -276,6 +276,8 @@ export type Database = {
         | "steam"
         | "other"
         | "forums"
+        | "tox"
+        | "session"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -422,6 +424,8 @@ export const Constants = {
         "steam",
         "other",
         "forums",
+        "tox",
+        "session",
       ],
     },
   },

@@ -17,7 +17,7 @@ interface SocialAccountFormProps {
 const platforms = [
   "telegram", "discord", "twitter", "instagram", "facebook",
   "linkedin", "github", "reddit", "tiktok", "youtube",
-  "whatsapp", "signal", "snapchat", "twitch", "steam", "forums", "other"
+  "whatsapp", "signal", "snapchat", "twitch", "steam", "tox", "session", "forums", "other"
 ];
 
 const SocialAccountForm = ({ account, entityId, onSubmit, onCancel }: SocialAccountFormProps) => {

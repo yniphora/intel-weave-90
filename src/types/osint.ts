@@ -15,6 +15,8 @@ export type SocialPlatform =
   | "snapchat" 
   | "twitch" 
   | "steam" 
+  | "tox"
+  | "session"
   | "forums"
   | "other";
 
