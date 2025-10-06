@@ -381,19 +381,6 @@ const RelationshipGraph = () => {
             </div>
           </div>
 
-          {/* Instructions Card */}
-          <Card className="border-primary/20 bg-card/50 p-4">
-            <h3 className="font-semibold text-sm text-foreground mb-2">
-              💡 Cómo conectar entidades:
-            </h3>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• <strong>Arrastra</strong> desde cualquier nodo a otro para crear una conexión morada</li>
-              <li>• Conecta <strong>Personas, Grupos y Organizaciones</strong> sin restricciones</li>
-              <li>• Puedes crear <strong>múltiples relaciones</strong> entre las mismas entidades</li>
-              <li>• Haz clic en "Añadir Relación" para conectar manualmente</li>
-              <li>• Haz clic en una línea morada para seleccionarla y eliminarla</li>
-            </ul>
-          </Card>
         </div>
 
         <div className="h-[calc(100vh-200px)] bg-card rounded-lg border-2 border-primary/20 shadow-glow">

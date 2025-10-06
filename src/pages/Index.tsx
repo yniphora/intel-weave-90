@@ -58,18 +58,36 @@ const Index = () => {
     setLoading(false);
   };
 
-  const filterEntities = () => {
+  const filterEntities = async () => {
     if (!searchQuery.trim()) {
       setFilteredEntities(entities);
       return;
     }
 
     const query = searchQuery.toLowerCase();
+    
+    // Get all entity IDs for searching in related tables
+    const entityIds = entities.map(e => e.id);
+    
+    // Search in social accounts
+    const { data: socialAccounts } = await supabase
+      .from("social_accounts")
+      .select("entity_id")
+      .in("entity_id", entityIds)
+      .or(`username.ilike.%${query}%,user_id_platform.ilike.%${query}%,display_name.ilike.%${query}%,profile_url.ilike.%${query}%,notes.ilike.%${query}%`);
+    
+    const entitiesWithSocialMatch = new Set(socialAccounts?.map(sa => sa.entity_id) || []);
+    
     const filtered = entities.filter(
       (entity) =>
         entity.name.toLowerCase().includes(query) ||
         entity.type.toLowerCase().includes(query) ||
-        (entity.notes && entity.notes.toLowerCase().includes(query))
+        (entity.notes && entity.notes.toLowerCase().includes(query)) ||
+        (entity.domains && entity.domains.toLowerCase().includes(query)) ||
+        (entity.ips && entity.ips.toLowerCase().includes(query)) ||
+        (entity.hosting_info && entity.hosting_info.toLowerCase().includes(query)) ||
+        (entity.web_archive_url && entity.web_archive_url.toLowerCase().includes(query)) ||
+        entitiesWithSocialMatch.has(entity.id)
     );
     setFilteredEntities(filtered);
   };

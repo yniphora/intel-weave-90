@@ -100,7 +100,9 @@ const SocialAccountForm = ({ account, entityId, onSubmit, onCancel }: SocialAcco
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="profile_url">URL del Perfil</Label>
+        <Label htmlFor="profile_url">
+          {formData.platform === "other" ? "URL de la Página" : "URL del Perfil"}
+        </Label>
         <Input
           id="profile_url"
           type="url"
