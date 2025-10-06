@@ -17,7 +17,7 @@ interface SocialAccountFormProps {
 const platforms = [
   "telegram", "discord", "twitter", "instagram", "facebook",
   "linkedin", "github", "reddit", "tiktok", "youtube",
-  "whatsapp", "signal", "snapchat", "twitch", "steam", "other"
+  "whatsapp", "signal", "snapchat", "twitch", "steam", "forums", "other"
 ];
 
 const SocialAccountForm = ({ account, entityId, onSubmit, onCancel }: SocialAccountFormProps) => {
@@ -89,19 +89,25 @@ const SocialAccountForm = ({ account, entityId, onSubmit, onCancel }: SocialAcco
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="display_name">Nombre Mostrado</Label>
+        <Label htmlFor="display_name">
+          {formData.platform === "forums" ? "Nombre del Foro" : "Nombre Mostrado"}
+        </Label>
         <Input
           id="display_name"
           value={formData.display_name || ""}
           onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-          placeholder="Display Name"
+          placeholder={formData.platform === "forums" ? "Nombre del foro" : "Display Name"}
           className="border-primary/20 focus:border-primary"
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="profile_url">
-          {formData.platform === "other" ? "URL de la Página" : "URL del Perfil"}
+          {formData.platform === "other" 
+            ? "Página Web" 
+            : formData.platform === "forums" 
+            ? "URL del Foro" 
+            : "URL del Perfil"}
         </Label>
         <Input
           id="profile_url"

@@ -15,6 +15,7 @@ export type SocialPlatform =
   | "snapchat" 
   | "twitch" 
   | "steam" 
+  | "forums"
   | "other";
 
 export interface Entity {
