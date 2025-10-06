@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, LogOut, Shield, Database, GitBranch } from "lucide-react";
+import { Plus, Search, LogOut, Database, GitBranch } from "lucide-react";
 import EntityCard from "@/components/EntityCard";
 import EntityForm from "@/components/EntityForm";
 import EntityDetails from "@/components/EntityDetails";
@@ -157,18 +157,7 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-primary/20 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10 glow-primary">
-                <Shield className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  OSINT Intelligence Hub
-                </h1>
-                <p className="text-xs text-muted-foreground">Sistema de Gestión de Entidades</p>
-              </div>
-            </div>
+          <div className="flex items-center justify-end">
             <div className="flex gap-2">
               <Button
                 variant="outline"
