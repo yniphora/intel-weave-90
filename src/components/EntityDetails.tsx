@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, ExternalLink, Image as ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Image as ImageIcon, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SocialAccountForm from "./SocialAccountForm";
 import EntityImageForm from "./EntityImageForm";
@@ -126,6 +126,61 @@ const EntityDetails = ({ entity, onUpdate }: EntityDetailsProps) => {
     }
   };
 
+  const handleExportJSON = async () => {
+    try {
+      // Get all related data
+      const [tagsResult, relationshipsResult] = await Promise.all([
+        supabase
+          .from("entity_tags")
+          .select("tag_id, tags(name, color)")
+          .eq("entity_id", entity.id),
+        supabase
+          .from("relationships")
+          .select("*, entities!relationships_entity_b_id_fkey(name)")
+          .or(`entity_a_id.eq.${entity.id},entity_b_id.eq.${entity.id}`)
+      ]);
+
+      const exportData = {
+        entity: {
+          id: entity.id,
+          name: entity.name,
+          type: entity.type,
+          avatar_url: entity.avatar_url,
+          notes: entity.notes,
+          ips: entity.ips,
+          domains: entity.domains,
+          hosting_info: entity.hosting_info,
+          web_archive_url: entity.web_archive_url,
+          created_at: entity.created_at,
+          updated_at: entity.updated_at
+        },
+        social_accounts: socialAccounts,
+        images: entityImages,
+        tags: tagsResult.data || [],
+        relationships: relationshipsResult.data || []
+      };
+
+      // Create and download JSON file
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${entity.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Datos exportados exitosamente" });
+    } catch (error) {
+      toast({ 
+        title: "Error al exportar", 
+        description: "No se pudo exportar los datos",
+        variant: "destructive" 
+      });
+    }
+  };
+
   const handleSaveImage = async (data: Partial<EntityImage>) => {
     if (!data.image_url) return;
 
@@ -195,6 +250,14 @@ const EntityDetails = ({ entity, onUpdate }: EntityDetailsProps) => {
               {entity.type}
             </Badge>
           </div>
+          <Button
+            onClick={handleExportJSON}
+            variant="outline"
+            className="border-primary/30 hover:bg-primary/10"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Exportar JSON
+          </Button>
         </CardHeader>
         <CardContent>
           {entity.notes && (
