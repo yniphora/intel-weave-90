@@ -26,7 +26,8 @@ interface Tag {
 
 const PREDEFINED_TAGS = [
   { name: "Scammer", color: "#ef4444" },
-  { name: "Fraude confirmado", color: "#dc2626" },
+  { name: "Fraude", color: "#dc2626" },
+  { name: "Posible Scammer", color: "#f97316" },
   { name: "Sospechoso", color: "#f59e0b" },
   { name: "Investigación en curso", color: "#3b82f6" },
   { name: "Reincidente", color: "#8b5cf6" },
