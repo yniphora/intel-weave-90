@@ -34,6 +34,7 @@ const EntityDetails = ({ entity, onUpdate }: EntityDetailsProps) => {
   const [entityImages, setEntityImages] = useState<EntityImage[]>([]);
   const [showImageForm, setShowImageForm] = useState(false);
   const [editingImage, setEditingImage] = useState<EntityImage | null>(null);
+  const [viewingImage, setViewingImage] = useState<EntityImage | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -375,7 +376,10 @@ const EntityDetails = ({ entity, onUpdate }: EntityDetailsProps) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {entityImages.map((image) => (
                 <Card key={image.id} className="border-primary/10 overflow-hidden">
-                  <div className="relative aspect-video bg-muted">
+                  <div 
+                    className="relative aspect-video bg-muted cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setViewingImage(image)}
+                  >
                     <img
                       src={image.image_url}
                       alt={image.title || "Entity image"}
@@ -456,6 +460,31 @@ const EntityDetails = ({ entity, onUpdate }: EntityDetailsProps) => {
               setEditingImage(null);
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
+        <DialogContent className="max-w-4xl border-primary/20">
+          <DialogHeader>
+            <DialogTitle>
+              {viewingImage?.title || "Imagen"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative w-full bg-muted rounded-lg overflow-hidden">
+              <img
+                src={viewingImage?.image_url}
+                alt={viewingImage?.title || "Entity image"}
+                className="w-full h-auto max-h-[70vh] object-contain"
+              />
+            </div>
+            {viewingImage?.notes && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-muted-foreground">Notas</h4>
+                <p className="text-sm">{viewingImage.notes}</p>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
