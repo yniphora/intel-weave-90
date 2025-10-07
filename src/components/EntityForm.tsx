@@ -31,6 +31,7 @@ const PREDEFINED_TAGS = [
   { name: "Sospechoso", color: "#f59e0b" },
   { name: "Investigación en curso", color: "#3b82f6" },
   { name: "Reincidente", color: "#8b5cf6" },
+  { name: "Detenido", color: "#991b1b" },
 ];
 
 const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
