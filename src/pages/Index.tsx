@@ -92,7 +92,7 @@ const Index = () => {
     setFilteredEntities(filtered);
   };
 
-  const handleSaveEntity = async (data: Partial<Entity>) => {
+  const handleSaveEntity = async (data: Partial<Entity>, selectedTags: string[]) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !data.name) return;
 
@@ -105,25 +105,60 @@ const Index = () => {
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
+        // Update entity tags
+        await supabase
+          .from("entity_tags")
+          .delete()
+          .eq("entity_id", editingEntity.id);
+        
+        if (selectedTags.length > 0) {
+          await supabase
+            .from("entity_tags")
+            .insert(
+              selectedTags.map(tagId => ({
+                entity_id: editingEntity.id,
+                tag_id: tagId,
+              }))
+            );
+        }
+        
         toast({ title: "Entidad actualizada exitosamente" });
         loadEntities();
         setShowForm(false);
         setEditingEntity(null);
       }
     } else {
-      const { error } = await supabase
+      const { data: newEntity, error } = await supabase
         .from("entities")
         .insert([{ 
           name: data.name,
           type: data.type || "person",
           avatar_url: data.avatar_url || null,
           notes: data.notes || null,
+          ips: data.ips || null,
+          domains: data.domains || null,
+          hosting_info: data.hosting_info || null,
+          web_archive_url: data.web_archive_url || null,
           user_id: user.id 
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
-      } else {
+      } else if (newEntity) {
+        // Insert entity tags
+        if (selectedTags.length > 0) {
+          await supabase
+            .from("entity_tags")
+            .insert(
+              selectedTags.map(tagId => ({
+                entity_id: newEntity.id,
+                tag_id: tagId,
+              }))
+            );
+        }
+        
         toast({ title: "Entidad creada exitosamente" });
         loadEntities();
         setShowForm(false);

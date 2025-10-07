@@ -9,12 +9,28 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface EntityFormProps {
   entity?: Entity | null;
-  onSubmit: (data: Partial<Entity>) => void;
+  onSubmit: (data: Partial<Entity>, selectedTags: string[]) => void;
   onCancel: () => void;
 }
+
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+const PREDEFINED_TAGS = [
+  { name: "Scammer", color: "#ef4444" },
+  { name: "Fraude confirmado", color: "#dc2626" },
+  { name: "Sospechoso", color: "#f59e0b" },
+  { name: "Investigación en curso", color: "#3b82f6" },
+  { name: "Reincidente", color: "#8b5cf6" },
+];
 
 const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
   const [formData, setFormData] = useState<Partial<Entity>>({
@@ -30,13 +46,76 @@ const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
   const [uploading, setUploading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (entity) {
       setFormData(entity);
       setPreviewUrl(entity.avatar_url || "");
+      loadEntityTags();
     }
+    loadOrCreateTags();
   }, [entity]);
+
+  const loadEntityTags = async () => {
+    if (!entity) return;
+    
+    const { data } = await supabase
+      .from("entity_tags")
+      .select("tag_id")
+      .eq("entity_id", entity.id);
+    
+    if (data) {
+      setSelectedTags(data.map(t => t.tag_id));
+    }
+  };
+
+  const loadOrCreateTags = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Get existing tags
+    const { data: existingTags } = await supabase
+      .from("tags")
+      .select("*")
+      .eq("user_id", user.id);
+
+    const existingTagNames = existingTags?.map(t => t.name) || [];
+    const tagsToCreate = PREDEFINED_TAGS.filter(
+      pt => !existingTagNames.includes(pt.name)
+    );
+
+    // Create missing predefined tags
+    if (tagsToCreate.length > 0) {
+      await supabase
+        .from("tags")
+        .insert(
+          tagsToCreate.map(tag => ({
+            name: tag.name,
+            color: tag.color,
+            user_id: user.id,
+          }))
+        );
+    }
+
+    // Load all tags
+    const { data: allTags } = await supabase
+      .from("tags")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("name");
+
+    setAvailableTags(allTags || []);
+  };
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tagId)
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -87,7 +166,7 @@ const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
       }
     }
 
-    onSubmit({ ...formData, avatar_url: avatarUrl });
+    onSubmit({ ...formData, avatar_url: avatarUrl }, selectedTags);
     setUploading(false);
   };
 
@@ -224,6 +303,32 @@ const EntityForm = ({ entity, onSubmit, onCancel }: EntityFormProps) => {
           placeholder="Información adicional, capturas de pantalla, observaciones..."
           className="border-primary/20 focus:border-primary min-h-[100px]"
         />
+      </div>
+
+      <div className="space-y-3">
+        <Label>Etiquetas</Label>
+        <div className="space-y-2">
+          {availableTags.map((tag) => (
+            <div key={tag.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`tag-${tag.id}`}
+                checked={selectedTags.includes(tag.id)}
+                onCheckedChange={() => toggleTag(tag.id)}
+              />
+              <label
+                htmlFor={`tag-${tag.id}`}
+                className="flex-1 cursor-pointer"
+              >
+                <Badge
+                  style={{ backgroundColor: tag.color }}
+                  className="text-white border-0"
+                >
+                  {tag.name}
+                </Badge>
+              </label>
+            </div>
+          ))}
+        </div>
       </div>
 
       <DialogFooter>
