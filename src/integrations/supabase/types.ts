@@ -59,6 +59,45 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_documents: {
+        Row: {
+          created_at: string
+          entity_id: string
+          file_name: string
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          notes: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          file_name: string
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          notes?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          notes?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       entity_images: {
         Row: {
           created_at: string
